@@ -47,16 +47,16 @@ func CreateFromSecretAgent(_ logrus.FieldLogger, sa internal.SecretAgent) (*Toke
 	return &t, nil
 }
 
-func Login(_ logrus.FieldLogger, username string, password string) (*TokenSource, error) {
+func Login(_ logrus.FieldLogger, email string, password string) (*TokenSource, error) {
 	const url = "https://eapi.charge.space/api/v5/auth/login"
-	apikey, _ := os.LookupEnv("APIKEY")
+	apiKey, _ := os.LookupEnv("APIKEY")
 	postBody, _ := json.Marshal(map[string]string{
-		"email":    username,
+		"email":    email,
 		"password": password,
 	})
 	responseBody := bytes.NewBuffer(postBody)
 
-	req, err := httphelper.CreateRequest("POST", url, "apiKey", apikey, responseBody)
+	req, err := httphelper.CreateRequest("POST", url, "apiKey", apiKey, responseBody)
 	if err != nil {
 		return nil, err
 	}

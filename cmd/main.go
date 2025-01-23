@@ -23,14 +23,14 @@ func main() {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-	username, _ := os.LookupEnv("EMAIL")
+	email, _ := os.LookupEnv("EMAIL")
 	password, _ := os.LookupEnv("PASSWORD")
 
 	ctx := context.Background()
 	logger := logrus.WithField("origin", "test-connector")
 
 	// First log in to charge amps and get access tokens
-	id, err := identity.Login(logger, username, password)
+	id, err := identity.Login(logger, email, password)
 	if err != nil {
 		logger.WithError(err).Error("failed to create identity")
 
