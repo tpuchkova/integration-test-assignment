@@ -1,10 +1,14 @@
 package identity
 
 import (
+	"bytes"
 	"encoding/json"
+	"os"
 
 	"github.com/sirupsen/logrus"
+
 	"gitlab.com/gridio/test-assignment/internal"
+	httphelper "gitlab.com/gridio/test-assignment/pkg/chargeamps/http"
 )
 
 type TokenSource struct {
@@ -12,25 +16,63 @@ type TokenSource struct {
 }
 
 type internalToken struct {
-	// TODO: Replace with proper fields that chargeamps is responding with
-	Field1 string `json:"field1"`
+	Message      string `json:"message"`
+	Token        string `json:"token"`
+	User         user   `json:"user"`
+	RefreshToken string `json:"refreshToken"`
 }
 
-func CreateFromSecretAgent(_ logrus.FieldLogger, sa internal.SecretAgent) *TokenSource {
+type user struct {
+	Id         string     `json:"id"`
+	FirstName  string     `json:"firstName"`
+	LastName   string     `json:"lastName"`
+	Email      string     `json:"email"`
+	Mobile     string     `json:"mobile"`
+	RfidTags   []struct{} `json:"rfidTags"`
+	UserStatus string     `json:"userStatus"`
+}
+
+func CreateFromSecretAgent(_ logrus.FieldLogger, sa internal.SecretAgent) (*TokenSource, error) {
 	t := TokenSource{}
 
-	var unmarshalled internalToken
+	var unmarshalled string
 
-	_ = json.Unmarshal([]byte(sa.ProvideSecret()), &unmarshalled)
-	// TODO: Check error here
+	err := json.Unmarshal([]byte(sa.ProvideSecret()), &unmarshalled)
+	if err != nil {
+		return nil, err
+	}
 
-	t.token = unmarshalled
+	t.token.Token = unmarshalled
 
-	return &t
+	return &t, nil
 }
 
 func Login(_ logrus.FieldLogger, username string, password string) (*TokenSource, error) {
-	t := TokenSource{}
+	const url = "https://eapi.charge.space/api/v5/auth/login"
+	apikey, _ := os.LookupEnv("APIKEY")
+	postBody, _ := json.Marshal(map[string]string{
+		"email":    username,
+		"password": password,
+	})
+	responseBody := bytes.NewBuffer(postBody)
+
+	req, err := httphelper.CreateRequest("POST", url, "apiKey", apikey, responseBody)
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := httphelper.GetResponseBody(req)
+	if err != nil {
+		return nil, err
+	}
+
+	var token internalToken
+	err = json.Unmarshal(body, &token)
+	if err != nil {
+		return nil, err
+	}
+
+	t := TokenSource{token: token}
 
 	return &t, nil
 }
@@ -46,10 +88,7 @@ func (t *TokenSource) IsUnauthorized() bool {
 }
 
 func (t *TokenSource) String() string {
-	b, _ := json.Marshal(t.token)
+	b, _ := json.Marshal(t.token.Token)
 
 	return string(b)
 }
-
-// TODO: Write a function that retrieves access and refresh tokens from chargeamps and stores them in internalToken
-// 	struct

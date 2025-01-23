@@ -12,7 +12,7 @@ type DeviceListProvider interface {
 
 type ChargerBackend interface {
 	DeviceListProvider
-	DoChargerStatusRequest(ctx context.Context, id PhysicalID) (*ChargerStatus, error)
+	DoChargerStatusRequest(ctx context.Context, id PhysicalID) (*ChargePointStatus, error)
 	StartCharge(ctx context.Context, id PhysicalID, p Power) error
 	Stop(ctx context.Context, id PhysicalID) error
 }
@@ -47,6 +47,13 @@ const (
 	StatusStopped
 )
 
+type ChargePointStatusType string
+
+const (
+	StatusOnline  ChargePointStatusType = "Online"
+	StatusOffline ChargePointStatusType = "Offline"
+)
+
 type DeviceMetadata struct {
 	ID       PhysicalID
 	Name     string
@@ -59,4 +66,9 @@ type ChargerStatus struct {
 	Energy       Energy
 	SetPoint     Power
 	ChargeStatus DeviceStatus
+}
+
+type ChargePointStatus struct {
+	ID     PhysicalID
+	Status ChargePointStatusType
 }

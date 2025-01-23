@@ -3,9 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 
+	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
+
 	"gitlab.com/gridio/test-assignment/internal"
 	"gitlab.com/gridio/test-assignment/pkg/chargeamps/backend"
 	"gitlab.com/gridio/test-assignment/pkg/chargeamps/identity"
@@ -16,7 +19,11 @@ const (
 )
 
 func main() {
-	username, _ := os.LookupEnv("USERNAME")
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+	username, _ := os.LookupEnv("EMAIL")
 	password, _ := os.LookupEnv("PASSWORD")
 
 	ctx := context.Background()
@@ -35,7 +42,12 @@ func main() {
 	newIntegrationFactory := backend.Factory(logger)
 
 	// 1. Now create new integration instance
-	newIntegration := newIntegrationFactory(userID, secretAgent)
+	newIntegration, err := newIntegrationFactory(userID, secretAgent)
+	if err != nil {
+		logger.WithError(err).Error("error creating new integration instance")
+
+		os.Exit(1)
+	}
 
 	// 2. Get all devices
 	devList, err := newIntegration.DoDeviceListRequest(ctx)
