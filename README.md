@@ -1,4 +1,4 @@
-Create `.env` file int the root of project with `EMAIL`, `PASSWORD` and `APIKEY`
+Create `.env` file int the root of the project with `EMAIL`, `PASSWORD` and `APIKEY`
 
 Run the integration via either 
 ```shell
